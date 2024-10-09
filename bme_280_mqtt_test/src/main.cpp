@@ -20,14 +20,13 @@ const char *mqtt_username = "station";
 const char *mqtt_password = "Elo-Ict-2024";
 const int mqtt_port = 1883;
 
-//globale variabelen
+// globale variabelen
 float temperature;
 float humidity;
 float pressure;
 float windSpeed;
-int sensorPin = 36; // data wind
+int sensorPin = 36;     // data wind
 float resistor = 120.0; // weerstandswaarde ingeven wind
-
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -84,11 +83,25 @@ void setup()
   }
 
   Serial.println("-- Default Test --");
-  
 
   Serial.println();
 }
+float readWindSpeed()
+{
+  int sensorVal = analogRead(sensorPin);
+  float voltage = sensorVal * (3.3 / 4095.0); // waarde op schaal zetten
 
+  float currentmA = (voltage / resistor) * 1000; // stroom in mA
+
+  if (currentmA < 4)
+  {
+    currentmA = 4; // Stroom mag niet lager zijn dan 4 mA want kan niet
+  }
+
+  float windSpeed = (currentmA - 4) * (108 / 16); // sensor kan tot 30m/s = 108 km/h
+
+  return windSpeed;
+}
 void printValues()
 {
   Serial.print("Temperature = ");
@@ -121,39 +134,21 @@ void readValues()
   humidity = bme.readHumidity();
   pressure = bme.readPressure() / 100.0F;
   windSpeed = readWindSpeed();
-
 }
 
 void publishValues()
 {
   JsonDocument doc;
   doc["id"] = "testWarre";
-  doc["timestamp"]="tijd";
+  doc["timestamp"] = "tijd";
   doc["temperature(C)"] = temperature;
-  doc["humidity(%)"]= humidity;
-  doc["pressure(HPa)"]=pressure;
+  doc["humidity(%)"] = humidity;
+  doc["pressure(HPa)"] = pressure;
   doc["windspeed(Km/h) "] = windSpeed;
   String jsonString;
   char buf[1000];
-  serializeJson(doc,buf);
-  client.publish(topic,buf);
-}
-
-float readWindSpeed()
-{
-    int sensorVal = analogRead(sensorPin);
-    float voltage = sensorVal * (3.3 / 4095.0); // waarde op schaal zetten
-
-    float currentmA = (voltage / resistor) * 1000; // stroom in mA
-
-    if (currentmA < 4)
-    {
-        currentmA = 4; // Stroom mag niet lager zijn dan 4 mA want kan niet
-    }
-
-    float windSpeed = (currentmA - 4) * (108 / 16); // sensor kan tot 30m/s = 108 km/h
-
-    return windSpeed;
+  serializeJson(doc, buf);
+  client.publish(topic, buf);
 }
 
 void loop()
@@ -161,6 +156,4 @@ void loop()
   readValues();
   publishValues();
   delay(delayTime);
-  
 }
-
