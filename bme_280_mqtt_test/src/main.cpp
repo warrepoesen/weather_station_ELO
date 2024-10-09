@@ -126,7 +126,6 @@ void publishValues()
   doc["temperature(C)"] = temperature;
   doc["humidity(%)"]= humidity;
   doc["pressure(HPa)"]=pressure;
-  String jsonString;
   char buf[1000];
   serializeJson(doc,buf);
   client.publish(topic,buf);
