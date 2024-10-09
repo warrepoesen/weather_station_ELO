@@ -20,7 +20,7 @@ const char *mqtt_username = "station";
 const char *mqtt_password = "Elo-Ict-2024";
 const int mqtt_port = 1883;
 
-//globale variabelen
+// globale variabelen
 float temperature;
 float humidity;
 float pressure;
@@ -80,7 +80,6 @@ void setup()
   }
 
   Serial.println("-- Default Test --");
-  
 
   Serial.println();
 }
@@ -115,20 +114,19 @@ void readValues()
   temperature = bme.readTemperature();
   humidity = bme.readHumidity();
   pressure = bme.readPressure() / 100.0F;
-
 }
 
 void publishValues()
 {
   JsonDocument doc;
   doc["id"] = "testWarre";
-  doc["timestamp"]="tijd";
+  doc["timestamp"] = "tijd";
   doc["temperature(C)"] = temperature;
-  doc["humidity(%)"]= humidity;
-  doc["pressure(HPa)"]=pressure;
+  doc["humidity(%)"] = humidity;
+  doc["pressure(HPa)"] = pressure;
   char buf[1000];
-  serializeJson(doc,buf);
-  client.publish(topic,buf);
+  serializeJson(doc, buf);
+  client.publish(topic, buf);
 }
 
 void loop()
@@ -136,5 +134,4 @@ void loop()
   readValues();
   publishValues();
   delay(delayTime);
-  
 }
