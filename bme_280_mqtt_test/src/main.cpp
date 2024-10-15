@@ -50,6 +50,9 @@ void setup()
     Serial.println("Connecting to WiFi..");
   }
 
+  pinMode(15,OUTPUT); // power pin 
+  digitalWrite(15,HIGH); // this has to be like this so the esp can be powered by the shield.
+
   client.setServer(mqtt_broker, mqtt_port);
 
   while (!client.connected())
