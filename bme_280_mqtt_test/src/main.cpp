@@ -50,8 +50,8 @@ void setup()
     Serial.println("Connecting to WiFi..");
   }
 
-  pinMode(15,OUTPUT); // power pin 
-  digitalWrite(15,HIGH); // this has to be like this so the esp can be powered by the shield.
+  pinMode(15, OUTPUT);    // power pin
+  digitalWrite(15, HIGH); // this has to be like this so the esp can be powered by the shield.
 
   client.setServer(mqtt_broker, mqtt_port);
 
@@ -72,18 +72,18 @@ void setup()
     }
   }
 
-  Serial.println(F("BME280 test"));
-  bool status;
-
+  
+  bool bmestatus;
   // default settings
   // (you can also pass in a Wire library object like &Wire2)
-  status = bme.begin(0x76);
-  if (!status)
+  bmestatus = bme.begin(0x76);
+  if (!bmestatus)
   {
     Serial.println("Could not find a valid BME280 sensor, check wiring!");
     while (1)
       ;
   }
+  
 
   Serial.println("-- Default Test --");
 
@@ -98,12 +98,13 @@ float readWindSpeed()
 
   if (currentmA < 4)
   {
-    currentmA = 4; // Stroom mag niet lager zijn dan 4 mA want kan niet
+    return (0 / 0); // Stroom mag niet lager zijn dan 4 mA want kan niet dus return NAN
   }
-
-  float windSpeed = (currentmA - 4) * (108 / 16); // sensor kan tot 30m/s = 108 km/h
-
-  return windSpeed;
+  else
+  {
+    float windSpeed = (currentmA - 4) * (108 / 16); // sensor kan tot 30m/s = 108 km/h
+    return windSpeed;
+  }
 }
 void printValues()
 {
@@ -147,7 +148,12 @@ void publishValues()
   doc["temperature(C)"] = temperature;
   doc["humidity(%)"] = humidity;
   doc["pressure(HPa)"] = pressure;
-  doc["windspeed(Km/h) "] = windSpeed;
+
+  if (windSpeed = windSpeed) // check if value is not NAN
+  {
+    doc["windspeed(Km/h) "] = windSpeed;
+  }
+
   String jsonString;
   char buf[1000];
   serializeJson(doc, buf);
