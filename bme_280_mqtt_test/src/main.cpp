@@ -14,10 +14,10 @@ const char *ssid = "ProjectNetwork"; // Enter your WiFi name
 const char *password = "eloict1234"; // Enter WiFi password
 
 // MQTT Broker
-const char *mqtt_broker = "www.lukaslipkens.be";
+const char *mqtt_broker = "k106.ucll-labo.be";
 const char *topic = "stationTest";
-const char *mqtt_username = "station";
-const char *mqtt_password = "Elo-Ict-2024";
+const char *mqtt_username = "project";
+const char *mqtt_password = "eloict1234";
 const int mqtt_port = 1883;
 
 // globale variabelen
