@@ -32,7 +32,7 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 #define SEALEVELPRESSURE_HPA (1013.25)
-
+bool bmestatus;
 Adafruit_BME280 bme; // I2C
 // Adafruit_BME280 bme(BME_CS); // hardware SPI
 // Adafruit_BME280 bme(BME_CS, BME_MOSI, BME_MISO, BME_SCK); // software SPI
@@ -71,18 +71,9 @@ void setup()
       delay(2000);
     }
   }
-
-  
-  bool bmestatus;
-  // default settings
-  // (you can also pass in a Wire library object like &Wire2)
   bmestatus = bme.begin(0x76);
-  if (!bmestatus)
-  {
-    Serial.println("Could not find a valid BME280 sensor, check wiring!");
-    while (1)
-      ;
-  }
+  
+
   
 
   Serial.println("-- Default Test --");
@@ -144,10 +135,14 @@ void publishValues()
 {
   JsonDocument doc;
   doc["id"] = "testWarre";
-  doc["timestamp"] = "tijd";
+  
+  if (bme.checkConnection(0x76))
+  {
   doc["temperature(C)"] = temperature;
   doc["humidity(%)"] = humidity;
   doc["pressure(HPa)"] = pressure;
+  
+  }
 
   if (windSpeed = windSpeed) // check if value is not NAN
   {
