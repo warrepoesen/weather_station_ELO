@@ -10,86 +10,63 @@
 #include <ArduinoJson.h>
 
 // WiFi
-const char *ssid = "ProjectNetwork"; // Enter your WiFi name
-const char *password = "eloict1234"; // Enter WiFi password
+#define SSID "ProjectNetwork" // Enter your WiFi name
+#define PASSWORD "eloict1234" // Enter WiFi password
+WiFiClient espClient;
 
 // MQTT Broker
-const char *mqtt_broker = "k106.ucll-labo.be";
-const char *topic = "stationTest";
-const char *mqtt_username = "project";
-const char *mqtt_password = "eloict1234";
-const int mqtt_port = 1883;
+#define MQTT_SERVER "k106.ucll-labo.be"
+#define MQTT_PORT 1883
+#define MQTT_USER "project"
+#define MQTT_PASSWORD "eloict1234"
+char topic[256];
+PubSubClient client(espClient);
 
 // globale variabelen
 float temperature;
 float humidity;
 float pressure;
 float windSpeed;
-int sensorPin = 36;     // data wind
-float resistor = 120.0; // weerstandswaarde ingeven wind
-
-WiFiClient espClient;
-PubSubClient client(espClient);
+#define WINDSPEED_SENSOR_PIN 36     // data wind
+#define WINDSPEED_SENSOR_RESISTOR 120 // weerstandswaarde ingeven wind
 
 #define SEALEVELPRESSURE_HPA (1013.25)
-bool bmestatus;
+
 Adafruit_BME280 bme; // I2C
 // Adafruit_BME280 bme(BME_CS); // hardware SPI
 // Adafruit_BME280 bme(BME_CS, BME_MOSI, BME_MISO, BME_SCK); // software SPI
 
 unsigned long delayTime = 5000;
 
-void setup()
+void readMacAddress()
 {
-  Serial.begin(9600);
-  // Connecting to a Wi-Fi network
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED)
+  uint8_t baseMac[6];
+  esp_err_t ret = esp_base_mac_addr_get(baseMac);
+  if (ret == ESP_OK)
   {
-    delay(500);
-    Serial.println("Connecting to WiFi..");
+    Serial.printf("%02x:%02x:%02x:%02x:%02x:%02x\n",
+                  baseMac[0], baseMac[1], baseMac[2],
+                  baseMac[3], baseMac[4], baseMac[5]);
+    sprintf(topic, "weatherstation/station_%02x%02x%02x%02x%02x%02x",
+            baseMac[0], baseMac[1], baseMac[2],
+            baseMac[3], baseMac[4], baseMac[5]);
+    Serial.println(topic);
   }
-
-  pinMode(15, OUTPUT);    // power pin
-  digitalWrite(15, HIGH); // this has to be like this so the esp can be powered by the shield.
-
-  client.setServer(mqtt_broker, mqtt_port);
-
-  while (!client.connected())
+  else
   {
-    String client_id = "esp32-client-";
-    client_id += String(WiFi.macAddress());
-    Serial.printf("The client %s connects to the public MQTT broker\n", client_id.c_str());
-    if (client.connect(client_id.c_str(), mqtt_username, mqtt_password))
-    {
-      Serial.println("Public EMQX MQTT broker connected");
-    }
-    else
-    {
-      Serial.print("failed with state ");
-      Serial.print(client.state());
-      delay(2000);
-    }
+    Serial.println("Failed to read MAC address");
   }
-  bmestatus = bme.begin(0x76);
-  
-
-  
-
-  Serial.println("-- Default Test --");
-
-  Serial.println();
 }
 float readWindSpeed()
 {
-  int sensorVal = analogRead(sensorPin);
+  int sensorVal = analogRead(WINDSPEED_SENSOR_PIN);
   float voltage = sensorVal * (3.3 / 4095.0); // waarde op schaal zetten
 
-  float currentmA = (voltage / resistor) * 1000; // stroom in mA
+  float currentmA = (voltage / WINDSPEED_SENSOR_RESISTOR) * 1000; // stroom in mA
 
   if (currentmA < 4)
   {
-    return (0 / 0); // Stroom mag niet lager zijn dan 4 mA want kan niet dus return NAN
+    return (-1); // Stroom mag niet lager zijn dan 4 mA want kan niet dus return NAN
   }
   else
   {
@@ -125,36 +102,76 @@ void printValues()
 
 void readValues()
 {
-  temperature = bme.readTemperature();
-  humidity = bme.readHumidity();
-  pressure = bme.readPressure() / 100.0F;
+  if (bme.checkConnection(0x76))
+  {
+    temperature = bme.readTemperature();
+    humidity = bme.readHumidity();
+    pressure = bme.readPressure() / 100.0F;
+  }
   windSpeed = readWindSpeed();
 }
 
 void publishValues()
 {
   JsonDocument doc;
-  doc["id"] = "testWarre";
   
+
   if (bme.checkConnection(0x76))
   {
-  doc["temperature(C)"] = temperature;
-  doc["humidity(%)"] = humidity;
-  doc["pressure(HPa)"] = pressure;
-  
+    doc["temperature(C)"] = temperature;
+    doc["humidity(%)"] = humidity;
+    doc["pressure(HPa)"] = pressure;
   }
 
-  if (windSpeed = windSpeed) // check if value is not NAN
+  if (windSpeed >0) // check if value is not NAN
   {
     doc["windspeed(Km/h) "] = windSpeed;
   }
 
-  String jsonString;
   char buf[1000];
   serializeJson(doc, buf);
-  client.publish(topic, buf);
+  if (bme.checkConnection(0x76) | (windSpeed > 0))
+  {
+    client.publish(topic, buf, true);
+  }
 }
 
+void setup()
+{
+  Serial.begin(115200);
+  // Connecting to a Wi-Fi network
+  WiFi.begin(SSID, PASSWORD);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.println("Connecting to WiFi..");
+  }
+
+  client.setServer(MQTT_SERVER, MQTT_PORT);
+
+  while (!client.connected())
+  {
+    String client_id = "esp32-client-";
+    client_id += String(WiFi.macAddress());
+    Serial.printf("The client %s connects to the public MQTT broker\n", client_id.c_str());
+    if (client.connect(client_id.c_str(), MQTT_USER, MQTT_PASSWORD))
+    {
+      Serial.println("Public EMQX MQTT broker connected");
+    }
+    else
+    {
+      Serial.print("failed with state ");
+      Serial.print(client.state());
+      delay(2000);
+    }
+  }
+  bmestatus = bme.begin(0x76);
+  readMacAddress();
+
+  Serial.println("-- Default Test --");
+
+  Serial.println();
+}
 void loop()
 {
   readValues();
