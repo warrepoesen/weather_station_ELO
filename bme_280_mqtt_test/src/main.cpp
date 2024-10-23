@@ -22,6 +22,11 @@ WiFiClient espClient;
 char topic[256];
 PubSubClient client(espClient);
 
+//sleep 
+#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
+#define TIME_TO_SLEEP  5        /* Time ESP32 will go to sleep (in seconds) */
+RTC_DATA_ATTR int bootCount = 0;
+
 // globale variabelen
 float temperature;
 float humidity;
@@ -38,6 +43,23 @@ Adafruit_BME280 bme; // I2C
 
 unsigned long delayTime = 5000;
 
+
+void print_wakeup_reason(){
+  esp_sleep_wakeup_cause_t wakeup_reason;
+
+  wakeup_reason = esp_sleep_get_wakeup_cause();
+
+  switch(wakeup_reason)
+  {
+    case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
+    case ESP_SLEEP_WAKEUP_EXT1 : Serial.println("Wakeup caused by external signal using RTC_CNTL"); break;
+    case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
+    case ESP_SLEEP_WAKEUP_TOUCHPAD : Serial.println("Wakeup caused by touchpad"); break;
+    case ESP_SLEEP_WAKEUP_ULP : Serial.println("Wakeup caused by ULP program"); break;
+    default : Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
+  }
+}
+
 void readMacAddress()
 {
   uint8_t baseMac[6];
@@ -47,7 +69,7 @@ void readMacAddress()
     Serial.printf("%02x:%02x:%02x:%02x:%02x:%02x\n",
                   baseMac[0], baseMac[1], baseMac[2],
                   baseMac[3], baseMac[4], baseMac[5]);
-    sprintf(topic, "weatherstation/station_%02x%02x%02x%02x%02x%02x",
+    sprintf(topic, "weatherstations/data/stations/station_%02x%02x%02x%02x%02x%02x/measurement",
             baseMac[0], baseMac[1], baseMac[2],
             baseMac[3], baseMac[4], baseMac[5]);
     Serial.println(topic);
@@ -139,6 +161,15 @@ void publishValues()
 void setup()
 {
   Serial.begin(115200);
+  ++bootCount;
+  Serial.println("Boot number: " + String(bootCount));
+  print_wakeup_reason();
+  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+  Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) +
+  " Seconds");
+
+  //zet mosfet aan
+
   // Connecting to a Wi-Fi network
   WiFi.begin(SSID, PASSWORD);
   while (WiFi.status() != WL_CONNECTED)
@@ -165,12 +196,19 @@ void setup()
       delay(2000);
     }
   }
-  bmestatus = bme.begin(0x76);
   readMacAddress();
+  bme.begin(0x76);
+  
 
   Serial.println("-- Default Test --");
-
-  Serial.println();
+  readValues();
+  publishValues();
+  //mosfet uitzetten
+  Serial.println("Going to sleep now");
+  delay(500);
+  Serial.flush(); 
+  esp_deep_sleep_start();
+  Serial.println("This will never be printed");
 }
 void loop()
 {
