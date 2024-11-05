@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <TinyGPSPlus.h>
 
 // WiFi
 #define SSID "ProjectNetwork" // Enter your WiFi name
@@ -22,6 +23,14 @@ PubSubClient client(espClient);
 #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
 #define TIME_TO_SLEEP  5        /* Time ESP32 will go to sleep (in seconds) */
 RTC_DATA_ATTR int bootCount = 0;
+
+
+//gps
+#define RXD2 16
+#define TXD2 17
+#define GPS_BAUD 9600
+TinyGPSPlus gps;
+HardwareSerial gpsSerial(2);
 
 // globale variabelen
 float temperature;
@@ -92,6 +101,13 @@ float readWindSpeed()
     return windSpeed;
   }
 }
+void readGPS()
+{
+  //https://randomnerdtutorials.com/esp32-neo-6m-gps-module-arduino/
+
+
+}
+
 /*void printValues()
 {
   Serial.print("Temperature = ");
