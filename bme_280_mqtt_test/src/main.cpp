@@ -1,7 +1,3 @@
-/*********
-  Complete project details at https://randomnerdtutorials.com
-*********/
-
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
@@ -69,7 +65,7 @@ void readMacAddress()
     Serial.printf("%02x:%02x:%02x:%02x:%02x:%02x\n",
                   baseMac[0], baseMac[1], baseMac[2],
                   baseMac[3], baseMac[4], baseMac[5]);
-    sprintf(topic, "weatherstations/data/stations/station_%02x%02x%02x%02x%02x%02x/measurement",
+    sprintf(topic, "weatherstations/station_%02x%02x%02x%02x%02x%02x/measurement",
             baseMac[0], baseMac[1], baseMac[2],
             baseMac[3], baseMac[4], baseMac[5]);
     Serial.println(topic);
@@ -96,16 +92,16 @@ float readWindSpeed()
     return windSpeed;
   }
 }
-void printValues()
+/*void printValues()
 {
   Serial.print("Temperature = ");
   Serial.print(bme.readTemperature());
   Serial.println(" *C");
 
   // Convert temperature to Fahrenheit
-  /*Serial.print("Temperature = ");
+  Serial.print("Temperature = ");
   Serial.print(1.8 * bme.readTemperature() + 32);
-  Serial.println(" *F");*/
+  Serial.println(" *F");
 
   Serial.print("Pressure = ");
   Serial.print(bme.readPressure() / 100.0F);
@@ -121,6 +117,7 @@ void printValues()
 
   Serial.println();
 }
+*/
 
 void readValues()
 {
@@ -145,7 +142,7 @@ void publishValues()
     doc["pressure(HPa)"] = pressure;
   }
 
-  if (windSpeed >0) // check if value is not NAN
+  if (windSpeed >0) // check if value exists
   {
     doc["windspeed(Km/h) "] = windSpeed;
   }
@@ -197,6 +194,13 @@ void setup()
     }
   }
   readMacAddress();
+if (bootCount ==1)
+{
+ //read gps 
+ //send gps
+
+}
+
   bme.begin(0x76);
   
 
