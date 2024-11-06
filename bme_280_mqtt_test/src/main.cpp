@@ -16,28 +16,30 @@ WiFiClient espClient;
 #define MQTT_PORT 1883
 #define MQTT_USER "project"
 #define MQTT_PASSWORD "eloict1234"
-char topic[256];
+char measureTopic[256];
+char gpsTopic[256];
 PubSubClient client(espClient);
 
-//sleep 
-#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP  5        /* Time ESP32 will go to sleep (in seconds) */
+// sleep
+#define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
+#define TIME_TO_SLEEP 5        /* Time ESP32 will go to sleep (in seconds) */
 RTC_DATA_ATTR int bootCount = 0;
 
-
-//gps
-#define RXD2 16
-#define TXD2 17
+// gps
+#define RXD2 1
+#define TXD2 3
 #define GPS_BAUD 9600
 TinyGPSPlus gps;
 HardwareSerial gpsSerial(2);
+RTC_DATA_ATTR double longitude;
+RTC_DATA_ATTR double latitude;
 
 // globale variabelen
 float temperature;
 float humidity;
 float pressure;
 float windSpeed;
-#define WINDSPEED_SENSOR_PIN 36     // data wind
+#define WINDSPEED_SENSOR_PIN 36       // data wind
 #define WINDSPEED_SENSOR_RESISTOR 120 // weerstandswaarde ingeven wind
 
 #define SEALEVELPRESSURE_HPA (1013.25)
@@ -48,20 +50,32 @@ Adafruit_BME280 bme; // I2C
 
 unsigned long delayTime = 5000;
 
-
-void print_wakeup_reason(){
+void print_wakeup_reason()
+{
   esp_sleep_wakeup_cause_t wakeup_reason;
 
   wakeup_reason = esp_sleep_get_wakeup_cause();
 
-  switch(wakeup_reason)
+  switch (wakeup_reason)
   {
-    case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
-    case ESP_SLEEP_WAKEUP_EXT1 : Serial.println("Wakeup caused by external signal using RTC_CNTL"); break;
-    case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
-    case ESP_SLEEP_WAKEUP_TOUCHPAD : Serial.println("Wakeup caused by touchpad"); break;
-    case ESP_SLEEP_WAKEUP_ULP : Serial.println("Wakeup caused by ULP program"); break;
-    default : Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
+  case ESP_SLEEP_WAKEUP_EXT0:
+    Serial.println("Wakeup caused by external signal using RTC_IO");
+    break;
+  case ESP_SLEEP_WAKEUP_EXT1:
+    Serial.println("Wakeup caused by external signal using RTC_CNTL");
+    break;
+  case ESP_SLEEP_WAKEUP_TIMER:
+    Serial.println("Wakeup caused by timer");
+    break;
+  case ESP_SLEEP_WAKEUP_TOUCHPAD:
+    Serial.println("Wakeup caused by touchpad");
+    break;
+  case ESP_SLEEP_WAKEUP_ULP:
+    Serial.println("Wakeup caused by ULP program");
+    break;
+  default:
+    Serial.printf("Wakeup was not caused by deep sleep: %d\n", wakeup_reason);
+    break;
   }
 }
 
@@ -74,10 +88,14 @@ void readMacAddress()
     Serial.printf("%02x:%02x:%02x:%02x:%02x:%02x\n",
                   baseMac[0], baseMac[1], baseMac[2],
                   baseMac[3], baseMac[4], baseMac[5]);
-    sprintf(topic, "weatherstations/station_%02x%02x%02x%02x%02x%02x/measurement",
+    sprintf(measureTopic, "weatherstations/station_%02x%02x%02x%02x%02x%02x/measurement",
             baseMac[0], baseMac[1], baseMac[2],
             baseMac[3], baseMac[4], baseMac[5]);
-    Serial.println(topic);
+    Serial.println(measureTopic);
+    sprintf(gpsTopic, "weatherstations/station_%02x%02x%02x%02x%02x%02x/location",
+            baseMac[0], baseMac[1], baseMac[2],
+            baseMac[3], baseMac[4], baseMac[5]);
+    Serial.println(gpsTopic);
   }
   else
   {
@@ -103,9 +121,34 @@ float readWindSpeed()
 }
 void readGPS()
 {
-  //https://randomnerdtutorials.com/esp32-neo-6m-gps-module-arduino/
+  unsigned long start = millis();
 
+  while (millis() - start < 1000)
+  {
+    while (gpsSerial.available() > 0)
+    {
+      gps.encode(gpsSerial.read());
+    }
+    if (gps.location.isUpdated())
+    {
+      latitude = gps.location.lat();
+      longitude = gps.location.lng();
+      Serial.print("Time in UTC: ");
+      Serial.println(String(gps.date.year()) + "/" + String(gps.date.month()) + "/" + String(gps.date.day()) + "," + String(gps.time.hour()) + ":" + String(gps.time.minute()) + ":" + String(gps.time.second()));
+      Serial.println("");
+    }
+  }
+  // https://randomnerdtutorials.com/esp32-neo-6m-gps-module-arduino/
+}
+void publishGPS()
+{
+  JsonDocument doc;
+  doc["latitude"] = latitude;
+  doc["longitude"] = longitude;
 
+  char buf[1000];
+  serializeJson(doc, buf);
+  client.publish(gpsTopic, buf, true);
 }
 
 /*void printValues()
@@ -149,7 +192,6 @@ void readValues()
 void publishValues()
 {
   JsonDocument doc;
-  
 
   if (bme.checkConnection(0x76))
   {
@@ -158,7 +200,7 @@ void publishValues()
     doc["pressure(HPa)"] = pressure;
   }
 
-  if (windSpeed >0) // check if value exists
+  if (windSpeed > 0) // check if value exists
   {
     doc["windspeed(Km/h) "] = windSpeed;
   }
@@ -167,21 +209,23 @@ void publishValues()
   serializeJson(doc, buf);
   if (bme.checkConnection(0x76) | (windSpeed > 0))
   {
-    client.publish(topic, buf, true);
+    client.publish(measureTopic, buf, true);
   }
 }
 
 void setup()
 {
   Serial.begin(115200);
+  //gpsSerial.begin(GPS_BAUD, SERIAL_8N1, RXD2, TXD2);
+  //Serial.println("Serial 2 started at 9600 baud rate");
   ++bootCount;
   Serial.println("Boot number: " + String(bootCount));
   print_wakeup_reason();
   esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
   Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) +
-  " Seconds");
+                 " Seconds");
 
-  //zet mosfet aan
+  // zet mosfet aan
 
   // Connecting to a Wi-Fi network
   WiFi.begin(SSID, PASSWORD);
@@ -210,23 +254,22 @@ void setup()
     }
   }
   readMacAddress();
-if (bootCount ==1)
-{
- //read gps 
- //send gps
 
-}
+   /* if (bootCount == 1)
+  {
+    readGPS();
+     publishGPS();
+  }*/
 
   bme.begin(0x76);
-  
 
   Serial.println("-- Default Test --");
   readValues();
   publishValues();
-  //mosfet uitzetten
+  // mosfet uitzetten
   Serial.println("Going to sleep now");
   delay(500);
-  Serial.flush(); 
+  Serial.flush();
   esp_deep_sleep_start();
   Serial.println("This will never be printed");
 }
