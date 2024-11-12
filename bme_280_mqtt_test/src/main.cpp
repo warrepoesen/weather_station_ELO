@@ -26,8 +26,8 @@ PubSubClient client(espClient);
 RTC_DATA_ATTR int bootCount = 0;
 
 // gps
-#define RXD2 1
-#define TXD2 3
+#define RXD2 23 //aangepaste pinnen om UART2 te gebruiken
+#define TXD2 19
 #define GPS_BAUD 9600
 TinyGPSPlus gps;
 HardwareSerial gpsSerial(2);
@@ -119,36 +119,139 @@ float readWindSpeed()
     return windSpeed;
   }
 }
+
 void readGPS()
 {
-  unsigned long start = millis();
+  unsigned long startTime = millis();
+  unsigned long timeout = 10000; // 10-second timeout for GPS connection
 
-  while (millis() - start < 1000)
+  while (true) // Keep looping until we have valid coordinates or timeout
   {
-    while (gpsSerial.available() > 0)
-    {
-      gps.encode(gpsSerial.read());
+    // Check for timeout
+    if (millis() - startTime > timeout) {
+      Serial.println("GPS connection timed out.");
+      break; // Exit the loop if timeout is reached
     }
-    if (gps.location.isUpdated())
+
+    // Process GPS data for 1000 milliseconds (1 second) each loop
+    unsigned long readStart = millis();
+    while (millis() - readStart < 1000)
     {
-      latitude = gps.location.lat();
-      longitude = gps.location.lng();
-      Serial.print("Time in UTC: ");
-      Serial.println(String(gps.date.year()) + "/" + String(gps.date.month()) + "/" + String(gps.date.day()) + "," + String(gps.time.hour()) + ":" + String(gps.time.minute()) + ":" + String(gps.time.second()));
-      Serial.println("");
+      while (gpsSerial.available() > 0)
+      {
+        gps.encode(gpsSerial.read());
+      }
+
+      // Read and print GPS data if it has been updated
+      if (gps.location.isUpdated())
+      {
+        latitude = gps.location.lat();
+        longitude = gps.location.lng();
+        
+        Serial.print("Time in UTC: ");
+        Serial.println(String(gps.date.year()) + "/" + String(gps.date.month()) + "/" + String(gps.date.day()) + "," + 
+                       String(gps.time.hour()) + ":" + String(gps.time.minute()) + ":" + String(gps.time.second()));
+        Serial.println("");
+        Serial.print("Latitude: "); Serial.println(latitude);
+        Serial.print("Longitude: "); Serial.println(longitude);
+      }
+    }
+
+    // Check if both latitude and longitude are non-zero
+    if (latitude != 0 && longitude != 0) {
+      Serial.println("Valid GPS coordinates received.");
+      break; // Exit the loop if valid coordinates are obtained
+    } else {
+      Serial.println("Waiting for valid GPS coordinates...");
+      delay(500); // Wait before retrying to avoid excessive looping
     }
   }
-  // https://randomnerdtutorials.com/esp32-neo-6m-gps-module-arduino/
 }
+
+
+// void readGPS()
+// {
+//   while (true) // Keep looping until we have valid coordinates
+//   {
+//     // Process GPS data for 1000 milliseconds (1 second)
+//     unsigned long start = millis();
+//     while (millis() - start < 1000)
+//     {
+//       while (gpsSerial.available() > 0)
+//       {
+//         gps.encode(gpsSerial.read());
+//       }
+
+//       // Read and print GPS data if it has been updated
+//       if (gps.location.isUpdated())
+//       {
+//         latitude = gps.location.lat();
+//         longitude = gps.location.lng();
+        
+//         Serial.print("Time in UTC: ");
+//         Serial.println(String(gps.date.year()) + "/" + String(gps.date.month()) + "/" + String(gps.date.day()) + "," + 
+//                        String(gps.time.hour()) + ":" + String(gps.time.minute()) + ":" + String(gps.time.second()));
+//         Serial.println("");
+//         Serial.print("Latitude: "); Serial.println(latitude);
+//         Serial.print("Longitude: "); Serial.println(longitude);
+//       }
+//     }
+
+//     // Check if both latitude and longitude are non-zero
+//     if (latitude != 0 && longitude != 0) {
+     
+//       break; // Exit the loop if valid coordinates are obtained
+//     } else {
+//       Serial.println("Waiting for valid GPS coordinates...");
+//       delay(500); // Wait before retrying to avoid excessive looping
+//     }
+//   }
+// }
+
+// void readGPS()
+// {
+//   unsigned long start = millis();
+
+//   while (millis() - start < 1000)
+//   {
+//     while (gpsSerial.available() > 0)
+//     {
+//       gps.encode(gpsSerial.read());
+//     }
+//     //if (gps.location.isUpdated())
+//     {
+//       latitude = gps.location.lat();
+//       longitude = gps.location.lng();
+//       Serial.print("Time in UTC: ");
+//       Serial.println(String(gps.date.year()) + "/" + String(gps.date.month()) + "/" + String(gps.date.day()) + "," + String(gps.time.hour()) + ":" + String(gps.time.minute()) + ":" + String(gps.time.second()));
+//       Serial.println("");
+      
+//     }
+
+//     if ( gps.location.lat() && gps.location.lng()  == 0) {
+//         delay(500);
+//         readGPS();
+//           Serial.println("TRUEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEe");
+
+//   }
+//   }
+//   // https://randomnerdtutorials.com/esp32-neo-6m-gps-module-arduino/
+// }
 void publishGPS()
 {
-  JsonDocument doc;
-  doc["latitude"] = latitude;
-  doc["longitude"] = longitude;
 
-  char buf[1000];
-  serializeJson(doc, buf);
-  client.publish(gpsTopic, buf, true);
+  // if ( gps.location.lat() && gps.location.lng()  != 0) {
+      JsonDocument doc;
+      doc["latitude"] = latitude;
+      doc["longitude"] = longitude;
+
+      char buf[1000];
+    serializeJson(doc, buf);
+    client.publish(gpsTopic, buf, true);
+
+  // }
+
+
 }
 
 /*void printValues()
@@ -216,8 +319,8 @@ void publishValues()
 void setup()
 {
   Serial.begin(115200);
-  //gpsSerial.begin(GPS_BAUD, SERIAL_8N1, RXD2, TXD2);
-  //Serial.println("Serial 2 started at 9600 baud rate");
+  gpsSerial.begin(GPS_BAUD, SERIAL_8N1, RXD2, TXD2);
+  Serial.println("Serial 2 started at 9600 baud rate");
   ++bootCount;
   Serial.println("Boot number: " + String(bootCount));
   print_wakeup_reason();
@@ -255,11 +358,21 @@ void setup()
   }
   readMacAddress();
 
-   /* if (bootCount == 1)
+  if (bootCount == 3)
   {
     readGPS();
-     publishGPS();
-  }*/
+    delay(500);
+    publishGPS();
+     Serial.println("We zijn in bootloooooooooooooooooooooooooop 3");
+  }
+
+  if (bootCount == 5)
+  {
+    readGPS();
+    delay(500);
+    publishGPS();
+     Serial.println("We zijn in bootloooooooooooooooooooooooooop 5");
+  }
 
   bme.begin(0x76);
 
