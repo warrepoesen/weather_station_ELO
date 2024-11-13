@@ -19,6 +19,7 @@ WiFiClient espClient;
 #define MQTT_PASSWORD "eloict1234"
 char measureTopic[256];
 char gpsTopic[256];
+char statusTopic[256];
 PubSubClient client(espClient);
 
 // sleep
@@ -45,9 +46,6 @@ float TVOC;
 float eCO2;
 #define WINDSPEED_SENSOR_PIN 36       // data wind
 #define WINDSPEED_SENSOR_RESISTOR 120 // weerstandswaarde ingeven wind
-
-
-
 
 #define SEALEVELPRESSURE_HPA (1013.25)
 
@@ -106,6 +104,10 @@ void readMacAddress()
             baseMac[0], baseMac[1], baseMac[2],
             baseMac[3], baseMac[4], baseMac[5]);
     Serial.println(gpsTopic);
+    sprintf(statusTopic, "weatherstations/station_%02x%02x%02x%02x%02x%02x/status",
+            baseMac[0], baseMac[1], baseMac[2],
+            baseMac[3], baseMac[4], baseMac[5]);
+    Serial.println(statusTopic);
   }
   else
   {
@@ -203,9 +205,8 @@ void readValues()
     ens160.measure(true);
     ens160.measureRaw(true);
 
-    
-    AQI =ens160.getAQI();
-    TVOC=ens160.getTVOC();
+    AQI = ens160.getAQI();
+    TVOC = ens160.getTVOC();
     eCO2 = ens160.geteCO2();
   }
   windSpeed = readWindSpeed();
@@ -223,12 +224,18 @@ void publishValues()
   }
   if (ens160.available())
   {
-    doc["AQI(ppm)"]=AQI;
+    doc["AQI(ppm)"] = AQI;
     doc["TVOC(ppb)"] = TVOC;
     doc["eCO2(ppm)"] = eCO2;
-    Serial.print("AQI: ");Serial.print(ens160.getAQI());Serial.print("\t");
-    Serial.print("TVOC: ");Serial.print(ens160.getTVOC());Serial.print("ppb\t");
-    Serial.print("eCO2: ");Serial.print(ens160.geteCO2());Serial.print("ppm\t");
+    Serial.print("AQI: ");
+    Serial.print(ens160.getAQI());
+    Serial.print("\t");
+    Serial.print("TVOC: ");
+    Serial.print(ens160.getTVOC());
+    Serial.print("ppb\t");
+    Serial.print("eCO2: ");
+    Serial.print(ens160.geteCO2());
+    Serial.print("ppm\t");
   }
 
   if (windSpeed > 0) // check if value exists
@@ -243,7 +250,14 @@ void publishValues()
     client.publish(measureTopic, buf, true);
   }
 }
-
+void publishStatus() // tijdelijke functie op een mock batterij percentage te publishen
+{
+  JsonDocument doc;
+  doc["battery(%)"] = (69.69);
+  char buf[1000];
+  serializeJson(doc, buf);
+  client.publish(statusTopic, buf, true);
+}
 void setup()
 {
   Serial.begin(115200);
@@ -291,7 +305,7 @@ void setup()
    readGPS();
     publishGPS();
  }*/
-
+  publishStatus();
   bme.begin(0x76);
   ens160.begin();
   ens160.setMode(ENS160_OPMODE_STD);
