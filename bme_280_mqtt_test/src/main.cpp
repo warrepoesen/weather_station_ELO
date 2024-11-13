@@ -5,6 +5,7 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include <TinyGPSPlus.h>
+#include <ScioSense_ENS160.h>
 
 // WiFi
 #define SSID "ProjectNetwork" // Enter your WiFi name
@@ -39,10 +40,19 @@ float temperature;
 float humidity;
 float pressure;
 float windSpeed;
+float AQI;
+float TVOC;
+float eCO2;
 #define WINDSPEED_SENSOR_PIN 36       // data wind
 #define WINDSPEED_SENSOR_RESISTOR 120 // weerstandswaarde ingeven wind
 
+
+
+
 #define SEALEVELPRESSURE_HPA (1013.25)
+
+// ScioSense_ENS160      ens160(ENS160_I2CADDR_0);
+ScioSense_ENS160 ens160(ENS160_I2CADDR_1);
 
 Adafruit_BME280 bme; // I2C
 // Adafruit_BME280 bme(BME_CS); // hardware SPI
@@ -119,6 +129,7 @@ float readWindSpeed()
     return windSpeed;
   }
 }
+
 void readGPS()
 {
   unsigned long start = millis();
@@ -186,6 +197,17 @@ void readValues()
     humidity = bme.readHumidity();
     pressure = bme.readPressure() / 100.0F;
   }
+  Serial.println(ens160.available());
+  if (ens160.available())
+  {
+    ens160.measure(true);
+    ens160.measureRaw(true);
+
+    
+    AQI =ens160.getAQI();
+    TVOC=ens160.getTVOC();
+    eCO2 = ens160.geteCO2();
+  }
   windSpeed = readWindSpeed();
 }
 
@@ -198,6 +220,15 @@ void publishValues()
     doc["temperature(C)"] = temperature;
     doc["humidity(%)"] = humidity;
     doc["pressure(HPa)"] = pressure;
+  }
+  if (ens160.available())
+  {
+    doc["AQI(ppm)"]=AQI;
+    doc["TVOC(ppb)"] = TVOC;
+    doc["eCO2(ppm)"] = eCO2;
+    Serial.print("AQI: ");Serial.print(ens160.getAQI());Serial.print("\t");
+    Serial.print("TVOC: ");Serial.print(ens160.getTVOC());Serial.print("ppb\t");
+    Serial.print("eCO2: ");Serial.print(ens160.geteCO2());Serial.print("ppm\t");
   }
 
   if (windSpeed > 0) // check if value exists
@@ -216,8 +247,8 @@ void publishValues()
 void setup()
 {
   Serial.begin(115200);
-  //gpsSerial.begin(GPS_BAUD, SERIAL_8N1, RXD2, TXD2);
-  //Serial.println("Serial 2 started at 9600 baud rate");
+  // gpsSerial.begin(GPS_BAUD, SERIAL_8N1, RXD2, TXD2);
+  // Serial.println("Serial 2 started at 9600 baud rate");
   ++bootCount;
   Serial.println("Boot number: " + String(bootCount));
   print_wakeup_reason();
@@ -255,13 +286,15 @@ void setup()
   }
   readMacAddress();
 
-   /* if (bootCount == 1)
-  {
-    readGPS();
-     publishGPS();
-  }*/
+  /* if (bootCount == 1)
+ {
+   readGPS();
+    publishGPS();
+ }*/
 
   bme.begin(0x76);
+  ens160.begin();
+  ens160.setMode(ENS160_OPMODE_STD);
 
   Serial.println("-- Default Test --");
   readValues();
