@@ -5,7 +5,7 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include <TinyGPSPlus.h>
-#include <ScioSense_ENS160.h>
+
 
 // WiFi
 #define SSID "ProjectNetwork" // Enter your WiFi name
@@ -28,8 +28,8 @@ PubSubClient client(espClient);
 RTC_DATA_ATTR int bootCount = 0;
 
 // gps
-#define RXD2 23 //aangepaste pinnen om UART2 te gebruiken
-#define TXD2 19
+#define RXD2 19 //aangepaste pinnen om UART2 te gebruiken
+#define TXD2 23
 #define GPS_BAUD 9600
 TinyGPSPlus gps;
 HardwareSerial gpsSerial(2);
@@ -41,16 +41,11 @@ float temperature;
 float humidity;
 float pressure;
 float windSpeed;
-float AQI;
-float TVOC;
-float eCO2;
 #define WINDSPEED_SENSOR_PIN 36       // data wind
 #define WINDSPEED_SENSOR_RESISTOR 120 // weerstandswaarde ingeven wind
-
 #define SEALEVELPRESSURE_HPA (1013.25)
 
-// ScioSense_ENS160      ens160(ENS160_I2CADDR_0);
-ScioSense_ENS160 ens160(ENS160_I2CADDR_1);
+
 
 Adafruit_BME280 bme; // I2C
 // Adafruit_BME280 bme(BME_CS); // hardware SPI
@@ -135,7 +130,7 @@ float readWindSpeed()
 void readGPS()
 {
   unsigned long startTime = millis();
-  unsigned long timeout = 10000; // 10-second timeout for GPS connection
+  unsigned long timeout = 1000000; // 1000-second timeout for GPS connection
 
   while (true) // Keep looping until we have valid coordinates or timeout
   {
@@ -180,79 +175,10 @@ void readGPS()
   }
 }
 
-
-// void readGPS()
-// {
-//   while (true) // Keep looping until we have valid coordinates
-//   {
-//     // Process GPS data for 1000 milliseconds (1 second)
-//     unsigned long start = millis();
-//     while (millis() - start < 1000)
-//     {
-//       while (gpsSerial.available() > 0)
-//       {
-//         gps.encode(gpsSerial.read());
-//       }
-
-//       // Read and print GPS data if it has been updated
-//       if (gps.location.isUpdated())
-//       {
-//         latitude = gps.location.lat();
-//         longitude = gps.location.lng();
-        
-//         Serial.print("Time in UTC: ");
-//         Serial.println(String(gps.date.year()) + "/" + String(gps.date.month()) + "/" + String(gps.date.day()) + "," + 
-//                        String(gps.time.hour()) + ":" + String(gps.time.minute()) + ":" + String(gps.time.second()));
-//         Serial.println("");
-//         Serial.print("Latitude: "); Serial.println(latitude);
-//         Serial.print("Longitude: "); Serial.println(longitude);
-//       }
-//     }
-
-//     // Check if both latitude and longitude are non-zero
-//     if (latitude != 0 && longitude != 0) {
-     
-//       break; // Exit the loop if valid coordinates are obtained
-//     } else {
-//       Serial.println("Waiting for valid GPS coordinates...");
-//       delay(500); // Wait before retrying to avoid excessive looping
-//     }
-//   }
-// }
-
-// void readGPS()
-// {
-//   unsigned long start = millis();
-
-//   while (millis() - start < 1000)
-//   {
-//     while (gpsSerial.available() > 0)
-//     {
-//       gps.encode(gpsSerial.read());
-//     }
-//     //if (gps.location.isUpdated())
-//     {
-//       latitude = gps.location.lat();
-//       longitude = gps.location.lng();
-//       Serial.print("Time in UTC: ");
-//       Serial.println(String(gps.date.year()) + "/" + String(gps.date.month()) + "/" + String(gps.date.day()) + "," + String(gps.time.hour()) + ":" + String(gps.time.minute()) + ":" + String(gps.time.second()));
-//       Serial.println("");
-      
-//     }
-
-//     if ( gps.location.lat() && gps.location.lng()  == 0) {
-//         delay(500);
-//         readGPS();
-//           Serial.println("TRUEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEe");
-
-//   }
-//   }
-//   // https://randomnerdtutorials.com/esp32-neo-6m-gps-module-arduino/
-// }
 void publishGPS()
 {
 
-  // if ( gps.location.lat() && gps.location.lng()  != 0) {
+   if ( gps.location.lat() && gps.location.lng()  != 0) {
       JsonDocument doc;
       doc["latitude"] = latitude;
       doc["longitude"] = longitude;
@@ -261,37 +187,10 @@ void publishGPS()
     serializeJson(doc, buf);
     client.publish(gpsTopic, buf, true);
 
-  // }
+   }
 
 
 }
-
-/*void printValues()
-{
-  Serial.print("Temperature = ");
-  Serial.print(bme.readTemperature());
-  Serial.println(" *C");
-
-  // Convert temperature to Fahrenheit
-  Serial.print("Temperature = ");
-  Serial.print(1.8 * bme.readTemperature() + 32);
-  Serial.println(" *F");
-
-  Serial.print("Pressure = ");
-  Serial.print(bme.readPressure() / 100.0F);
-  Serial.println(" hPa");
-
-  Serial.print("Approx. Altitude = ");
-  Serial.print(bme.readAltitude(SEALEVELPRESSURE_HPA));
-  Serial.println(" m");
-
-  Serial.print("Humidity = ");
-  Serial.print(bme.readHumidity());
-  Serial.println(" %");
-
-  Serial.println();
-}
-*/
 
 void readValues()
 {
@@ -301,16 +200,8 @@ void readValues()
     humidity = bme.readHumidity();
     pressure = bme.readPressure() / 100.0F;
   }
-  Serial.println(ens160.available());
-  if (ens160.available())
-  {
-    ens160.measure(true);
-    ens160.measureRaw(true);
-
-    AQI = ens160.getAQI();
-    TVOC = ens160.getTVOC();
-    eCO2 = ens160.geteCO2();
-  }
+ 
+  
   windSpeed = readWindSpeed();
 }
 
@@ -323,21 +214,6 @@ void publishValues()
     doc["temperature(C)"] = temperature;
     doc["humidity(%)"] = humidity;
     doc["pressure(HPa)"] = pressure;
-  }
-  if (ens160.available())
-  {
-    doc["AQI(ppm)"] = AQI;
-    doc["TVOC(ppb)"] = TVOC;
-    doc["eCO2(ppm)"] = eCO2;
-    Serial.print("AQI: ");
-    Serial.print(ens160.getAQI());
-    Serial.print("\t");
-    Serial.print("TVOC: ");
-    Serial.print(ens160.getTVOC());
-    Serial.print("ppb\t");
-    Serial.print("eCO2: ");
-    Serial.print(ens160.geteCO2());
-    Serial.print("ppm\t");
   }
 
   if (windSpeed > 0) // check if value exists
@@ -402,25 +278,17 @@ void setup()
   }
   readMacAddress();
 
-  if (bootCount == 3)
+  if (bootCount == 1)
   {
     readGPS();
     delay(500);
     publishGPS();
-     Serial.println("We zijn in bootloooooooooooooooooooooooooop 3");
+    
   }
 
-  if (bootCount == 5)
-  {
-    readGPS();
-    delay(500);
-    publishGPS();
-     Serial.println("We zijn in bootloooooooooooooooooooooooooop 5");
-  }
+
 
   bme.begin(0x76);
-  ens160.begin();
-  ens160.setMode(ENS160_OPMODE_STD);
 
   Serial.println("-- Default Test --");
   readValues();
