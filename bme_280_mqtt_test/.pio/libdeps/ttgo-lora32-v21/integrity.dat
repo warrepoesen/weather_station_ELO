@@ -1,5 +1,4 @@
-adafruit/Adafruit BME280 Library@^2.2.4
-knolleary/PubSubClient@^2.8
-mikalhart/TinyGPSPlus@^1.1.0
 bblanchon/ArduinoJson@^7.2.0
-adafruit/ENS160 - Adafruit Fork@^3.0.1
+adafruit/Adafruit BME280 Library@^2.2.4
+mikalhart/TinyGPSPlus@^1.1.0
+knolleary/PubSubClient@^2.8
