@@ -21,55 +21,15 @@ WiFiClient espClient;
 
 PubSubClient client(espClient);
 
-
-
 // gps
-extern RTC_DATA_ATTR double longitude;
-extern RTC_DATA_ATTR double latitude;
 bool gps_on = false;
 
 // globale variabelen
 
- // I2C
-// Adafruit_BME280 bme(BME_CS); // hardware SPI
-// Adafruit_BME280 bme(BME_CS, BME_MOSI, BME_MISO, BME_SCK); // software SPI
-
-unsigned long delayTime = 5000;
-
-
-
-
-
-
-
-void publishValues()
-{
-  JsonDocument doc;
-
-  if (bme.checkConnection(0x76))
-  {
-    doc["temperature(C)"] = temperature;
-    doc["humidity(%)"] = humidity;
-    doc["pressure(HPa)"] = pressure;
-  }
-
-  if (windSpeed > 0) // check if value exists
-  {
-    doc["windspeed(Km/h) "] = windSpeed;
-  }
-  doc["battery(%)"] = (69.69);
-  char buf[1000];
-  serializeJson(doc, buf);
-  if (bme.checkConnection(0x76) | (windSpeed > 0))
-  {
-    client.publish(measureTopic, buf, true);
-  }
-}
-
 void setup()
 {
   Serial.begin(115200);
-  
+
   ++bootCount;
   Serial.println("Boot number: " + String(bootCount));
   print_wakeup_reason();
@@ -111,16 +71,22 @@ void setup()
   {
     readGPS();
     delay(500);
-    char buf[1000];
-    publishGPS(buf);
-    client.publish(gpsTopic,buf,true);
+    char buf1[1000];
+    serializeGPS(buf1);
+    client.publish(gpsTopic, buf1, true);
   }
 
   bme.begin(0x76);
 
   Serial.println("-- Default Test --");
   readValues();
-  publishValues();
+  if (bme.checkConnection(0x76) | (windSpeed > 0))
+  {
+    char buf2[1000];
+    serializeValues(buf2);
+    client.publish(measureTopic, buf2, true);
+  }
+
   // mosfet uitzetten
   Serial.println("Going to sleep now");
   delay(500);
@@ -130,7 +96,5 @@ void setup()
 }
 void loop()
 {
-  readValues();
-  publishValues();
-  delay(delayTime);
+  
 }

@@ -13,4 +13,5 @@ extern float windSpeed;
 
 
 float readWindSpeed();
-void readValues();
+void readValues();//reads all values and puts them in above variables.
+void serializeValues(char * buf); // serializes a json doc with all the above variables into a buf to prep for mqtt

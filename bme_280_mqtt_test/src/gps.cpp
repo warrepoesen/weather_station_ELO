@@ -66,7 +66,7 @@ void readGPS()
 }
 
 
-void publishGPS(char * buf)
+void serializeGPS(char * buf)
 {
 
   if (gps.location.lat() && gps.location.lng() != 0)

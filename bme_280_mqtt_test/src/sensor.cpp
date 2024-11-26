@@ -2,6 +2,7 @@
 
 #include <Adafruit_BME280.h>
 #include <Wire.h>
+#include <ArduinoJson.h>
 
 float temperature;
 float humidity;
@@ -37,4 +38,25 @@ void readValues()
   }
 
   windSpeed = readWindSpeed();
+}
+
+void serializeValues(char * buf)
+{
+  JsonDocument doc;
+
+  if (bme.checkConnection(0x76))
+  {
+    doc["temperature(C)"] = temperature;
+    doc["humidity(%)"] = humidity;
+    doc["pressure(HPa)"] = pressure;
+  }
+
+  if (windSpeed > 0) // check if value exists
+  {
+    doc["windspeed(Km/h) "] = windSpeed;
+  }
+  doc["battery(%)"] = (69.69);
+  
+  serializeJson(doc, buf,sizeof(buf));
+  
 }
