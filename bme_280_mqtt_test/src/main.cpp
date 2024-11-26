@@ -26,6 +26,7 @@ PubSubClient client(espClient);
 // gps
 extern RTC_DATA_ATTR double longitude;
 extern RTC_DATA_ATTR double latitude;
+bool gps_on = false;
 
 // globale variabelen
 
@@ -106,7 +107,7 @@ void setup()
   }
   readMacAddress();
 
-  if (bootCount == 1)
+  if (bootCount == 1 && gps_on)
   {
     readGPS();
     delay(500);
