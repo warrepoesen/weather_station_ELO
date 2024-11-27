@@ -14,16 +14,16 @@ void readGPS()
     Serial.println("Serial 2 started at 9600 baud rate");
 
     unsigned long startTime = millis();
-    unsigned long timeout = 1000000; // 1000-second timeout for GPS connection
+    //unsigned long timeout = 1000000; // 1000-second timeout for GPS connection
 
     while (true) // Keep looping until we have valid coordinates or timeout
     {
         // Check for timeout
-        if (millis() - startTime > timeout)
+        /*if (millis() - startTime > timeout)
         {
             Serial.println("GPS connection timed out.");
             break; // Exit the loop if timeout is reached
-        }
+        }*/
 
         // Process GPS data for 1000 milliseconds (1 second) each loop
         unsigned long readStart = millis();

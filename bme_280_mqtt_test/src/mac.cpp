@@ -4,6 +4,7 @@
 
 char measureTopic[256];
 char gpsTopic[256];
+char infoTopic[256];
 
 
 void readMacAddress()
@@ -20,6 +21,10 @@ void readMacAddress()
             baseMac[3], baseMac[4], baseMac[5]);
     Serial.println(measureTopic);
     sprintf(gpsTopic, "weatherstations/station_%02x%02x%02x%02x%02x%02x/location",
+            baseMac[0], baseMac[1], baseMac[2],
+            baseMac[3], baseMac[4], baseMac[5]);
+    Serial.println(gpsTopic);
+    sprintf(infoTopic, "weatherstations/station_%02x%02x%02x%02x%02x%02x/info",
             baseMac[0], baseMac[1], baseMac[2],
             baseMac[3], baseMac[4], baseMac[5]);
     Serial.println(gpsTopic);
