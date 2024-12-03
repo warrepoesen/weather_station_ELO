@@ -57,6 +57,6 @@ void serializeValues(char * buf)
   }
   doc["battery(%)"] = (69.69);
   
-  serializeJson(doc, buf,sizeof(buf));
+  serializeJson(doc, buf,1000);
   
 }

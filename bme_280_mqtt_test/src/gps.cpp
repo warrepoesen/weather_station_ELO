@@ -76,7 +76,7 @@ void serializeGPS(char * buf)
     doc["longitude"] = longitude;
 
     
-    serializeJson(doc, buf,sizeof(buf));
+    serializeJson(doc, buf,1000);
    
   }
 }
