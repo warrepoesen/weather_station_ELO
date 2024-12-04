@@ -57,7 +57,7 @@ void standardFunction()
     }
   }
   readMacAddress();
-  if (bootCount == 2)
+  if (bootCount == 2 && ap_setup)
   {
     Serial.println("Naam: " + String(userName));
     Serial.println("Wachtwoord: " + String(userPassword));
@@ -79,7 +79,7 @@ void standardFunction()
 
   Serial.println("-- Default Test --");
   readValues();
-  if (bme.checkConnection(0x76) | (windSpeed > 0))
+  if (bme.checkConnection(0x76) or (windSpeed >= 0) or windConnected )//check if any sensor is connected
   {
     char buf2[1000];
     serializeValues(buf2);
@@ -112,7 +112,7 @@ void setup()
     Serial.println("This will never be printed");
   }
 
-  AP_setup(); // setup= true ==> this happens otherwise it will already sleep here.
+  AP_setup(); // ap_setup= true ==> this happens otherwise it will already sleep here.
 }
 void loop()
 {
