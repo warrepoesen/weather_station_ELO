@@ -1,4 +1,5 @@
 bblanchon/ArduinoJson@^7.2.0
 adafruit/Adafruit BME280 Library@^2.2.4
-mikalhart/TinyGPSPlus@^1.1.0
 knolleary/PubSubClient@^2.8
+sandeepmistry/LoRa@^0.8.0
+mikalhart/TinyGPSPlus@^1.1.0

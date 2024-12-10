@@ -72,6 +72,7 @@ void serializeGPS(char * buf)
   if (gps.location.lat() && gps.location.lng() != 0)
   {
     JsonDocument doc;
+    doc["topic"]="location";
     doc["latitude"] = latitude;
     doc["longitude"] = longitude;
 

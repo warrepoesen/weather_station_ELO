@@ -30,11 +30,13 @@ RTC_DATA_ATTR char userPassword[64] = "";
 
 // setup
 RTC_DATA_ATTR bool ap_setup = true;
+RTC_DATA_ATTR bool ap_complete = false;
 
 
 void serializeInfo(char *buf)
 {
   JsonDocument doc;
+  doc["topic"]="info";
   doc["name"] = userName;
   doc["password"] = userPassword;
   serializeJson(doc, buf,1000);
@@ -106,6 +108,7 @@ void AP_loop()
             inputName.toCharArray(userName, sizeof(userName));
             inputPassword.toCharArray(userPassword, sizeof(userPassword));
             ap_setup = false;
+            ap_complete = true;
             // Stuur HTTP-redirect terug naar de root URL
             client.println("HTTP/1.1 303 See Other");
             client.println("Location: /");
