@@ -12,7 +12,7 @@ PubSubClient mqttClient(espClient);
 #define MQTT_PASSWORD "eloict1234"
 
 #define SSID "ProjectNetwork" // Enter your WiFi name
- #define PASSWORD "eloict1234" // Enter WiFi password
+#define PASSWORD "eloict1234" // Enter WiFi password
 #define LEDPIN 25
 
 #define SS 18
@@ -59,51 +59,64 @@ void onLoraReceive(int packetSize)
       Serial.println("Invalid data format : user value is missing");
     }
 
-    if (t == "i"){
+    if (t == "i") //if info topic
+    {
       String userName = doc["name"];
       String userPassword = doc["password"];
       userName.trim();
       userPassword.trim();
       JsonDocument doc1;
       doc1["name"] = userName;
-      doc1["password"] = userPassword; 
-      serializeJson(doc1,buf);
+      doc1["password"] = userPassword;
+      serializeJson(doc1, buf);
     }
-    if (t == "g"){
-      String latitude = doc["latitude"];
-      String longitude = doc["longitude"];
-      latitude.trim();
-      longitude.trim();
+    if (t == "g") //if gps topic
+    {
+      double latitude = doc["latitude"];
+      double longitude = doc["longitude"];
       JsonDocument doc1;
       doc1["latitude"] = latitude;
-      doc1["longitude"] = longitude; 
-      serializeJson(doc1,buf);
+      doc1["longitude"] = longitude;
+      serializeJson(doc1, buf);
     }
-    if (t == "m"){
-      String temperature = doc["temperature(C)"];
-      String humidity = doc["humidity(%)"];
-      String pressure = doc["pressure(HPa)"];
-      temperature.trim();
-      humidity.trim();
-      pressure.trim();
+    if (t == "m") //if measure topic
+    {
+
+      float temperature = doc["temperature(C)"];
+      float humidity = doc["humidity(%)"];
+      float pressure = doc["pressure(HPa)"];
+      float windspeed = doc["windspeed(Km/h)"];
+      String windDirection = doc["winddirection()"];
+      windDirection.trim();
+
       JsonDocument doc1;
-      //doc1["latitude"] = latitude;
-      //doc1["longitude"] = longitude; 
-      serializeJson(doc1,buf);
+      if (temperature)
+      {
+        doc1["temperature(C)"] = temperature;
+        doc1["humidity(%)"] = humidity;
+        doc1["pressure(HPa)"] = pressure;
+      }
+      if (windspeed)
+      {
+        doc1["windspeed(Km/h)"] = windspeed;
+      }
+      if (windDirection)
+      {
+        doc1["winddirection()"] = windDirection;
+      }
+      serializeJson(doc1, buf);
     }
-    
-    
 
     if (!hasError)
     {
-      
-      if (mqttClient.publish( topic.c_str() , buf , true))
+
+      if (mqttClient.publish(topic.c_str(), buf, true))
       {
-        Serial.println("Published MQTT message to topic ("+topic+") : " + message);
+        Serial.println("Published MQTT message to topic (" + topic + ") : " + message);
       }
       else
       {
-        Serial.println("Failed to send MQTT message to topic ("+topic+") : " + message);
+        Serial.println("Failed to send MQTT message to topic (" + topic + ") : " + message);
       }
     }
   }
