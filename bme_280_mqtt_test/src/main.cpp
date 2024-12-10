@@ -107,7 +107,7 @@ void standardFunction()
   {
     Serial.println("Naam: " + String(userName));
     Serial.println("Wachtwoord: " + String(userPassword));
-    
+    char buf0[1000];
     serializeInfo(buf0);
     sendLoraMessage(buf0);
   }
