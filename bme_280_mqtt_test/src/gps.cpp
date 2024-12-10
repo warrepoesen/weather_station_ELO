@@ -2,6 +2,8 @@
 #include <TinyGPSPlus.h>
 #include <ArduinoJson.h>
 
+#include "mac.h"
+
 TinyGPSPlus gps;
 HardwareSerial gpsSerial(2);
 RTC_DATA_ATTR double longitude;
@@ -72,7 +74,7 @@ void serializeGPS(char * buf)
   if (gps.location.lat() && gps.location.lng() != 0)
   {
     JsonDocument doc;
-    doc["topic"]="location";
+    doc["topic"]=gpsTopic;
     doc["latitude"] = latitude;
     doc["longitude"] = longitude;
 

@@ -10,9 +10,9 @@
 #include "AP.h"
 
 //// WiFi
-// #define SSID "ProjectNetwork" // Enter your WiFi name
-// #define PASSWORD "eloict1234" // Enter WiFi password
-// WiFiClient espClient;
+ #define SSID "ProjectNetwork" // Enter your WiFi name
+ #define PASSWORD "eloict1234" // Enter WiFi password
+WiFiClient espClient;
 
 //// MQTT Broker
 // #define MQTT_SERVER "k106.ucll-labo.be"
@@ -55,7 +55,7 @@ void standardFunction()
   // zet mosfet aan
 
   // Connecting to a Wi-Fi network
-  // WiFi.begin(SSID, PASSWORD);
+   WiFi.begin(SSID, PASSWORD);
   // while (WiFi.status() != WL_CONNECTED)
   //{
   //  delay(500);

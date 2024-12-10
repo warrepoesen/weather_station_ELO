@@ -3,6 +3,8 @@
 #include <ESPmDNS.h>
 #include <ArduinoJson.h>
 
+#include "mac.h"
+
 // Instellen van SSID en wachtwoord voor het access point
 #define AP_SSID "ESP32_AP"
 #define AP_PASSWORD "12345678"
@@ -29,14 +31,14 @@ RTC_DATA_ATTR char userName[64] = "";
 RTC_DATA_ATTR char userPassword[64] = "";
 
 // setup
-RTC_DATA_ATTR bool ap_setup = true;
+RTC_DATA_ATTR bool ap_setup = false;
 RTC_DATA_ATTR bool ap_complete = false;
 
 
 void serializeInfo(char *buf)
 {
   JsonDocument doc;
-  doc["topic"]="info";
+  doc["topic"]= infoTopic;
   doc["name"] = userName;
   doc["password"] = userPassword;
   serializeJson(doc, buf,1000);

@@ -1,8 +1,11 @@
 #include "sensor.h"
 
+
 #include <Adafruit_BME280.h>
 #include <Wire.h>
 #include <ArduinoJson.h>
+
+#include "mac.h"
 
 float temperature;
 float humidity;
@@ -115,7 +118,7 @@ void readValues()
 void serializeValues(char * buf)
 {
   JsonDocument doc;
-  doc["topic"]="measurement";
+  doc["topic"]=measureTopic;
 
   if (bme.checkConnection(0x76))
   {
