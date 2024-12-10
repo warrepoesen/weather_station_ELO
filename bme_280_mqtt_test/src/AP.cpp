@@ -38,6 +38,7 @@ RTC_DATA_ATTR bool ap_complete = false;
 void serializeInfo(char *buf)
 {
   JsonDocument doc;
+  doc["t"]="i";
   doc["topic"]= infoTopic;
   doc["name"] = userName;
   doc["password"] = userPassword;

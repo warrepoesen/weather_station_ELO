@@ -118,6 +118,7 @@ void readValues()
 void serializeValues(char * buf)
 {
   JsonDocument doc;
+  doc["t"]="m";
   doc["topic"]=measureTopic;
 
   if (bme.checkConnection(0x76))

@@ -6,22 +6,19 @@
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
-#define MQTT_SERVER "mqtt.ucll-labo.be"
+#define MQTT_SERVER "k106.ucll-labo.be"
 #define MQTT_PORT 1883
-#define MQTT_USER "ucll"
-#define MQTT_PASSWORD "demo"
-const String MQTT_CLIENTID = "ESP32-" + String(random(0xffffff), HEX);
-#define MQTT_MESSAGE_TIMER 15000
-unsigned long lastMessageMillis = 0;
+#define MQTT_USER "project"
+#define MQTT_PASSWORD "eloict1234"
 
-#define SSID "TP-Link_42C4"
-#define PASSWORD "66243359"
+#define SSID "ProjectNetwork" // Enter your WiFi name
+ #define PASSWORD "eloict1234" // Enter WiFi password
 #define LEDPIN 25
 
 #define SS 18
 #define RST 23
 #define DI0 26
-#define BAND 863.5E6
+#define BAND 8635E5
 
 boolean hasLora = false;
 
@@ -50,26 +47,57 @@ void onLoraReceive(int packetSize)
   }
   else
   {
-    String user = doc["user"];
-    String message = doc["message"];
-    user.trim();
-    message.trim();
-    if (user.length() == 0)
+    char buf[1000];
+    String t = doc["t"];
+    String topic = doc["topic"];
+    t.trim();
+    topic.trim();
+
+    if (t.length() == 0)
     {
       hasError = true;
       Serial.println("Invalid data format : user value is missing");
     }
 
-    if (message.length() == 0)
-    {
-      hasError = true;
-      Serial.println("Invalid data format : message value is missing");
+    if (t == "i"){
+      String userName = doc["name"];
+      String userPassword = doc["password"];
+      userName.trim();
+      userPassword.trim();
+      JsonDocument doc1;
+      doc1["name"] = userName;
+      doc1["password"] = userPassword; 
+      serializeJson(doc1,buf);
     }
+    if (t == "g"){
+      String latitude = doc["latitude"];
+      String longitude = doc["longitude"];
+      latitude.trim();
+      longitude.trim();
+      JsonDocument doc1;
+      doc1["latitude"] = latitude;
+      doc1["longitude"] = longitude; 
+      serializeJson(doc1,buf);
+    }
+    if (t == "m"){
+      String temperature = doc["temperature(C)"];
+      String humidity = doc["humidity(%)"];
+      String pressure = doc["pressure(HPa)"];
+      temperature.trim();
+      humidity.trim();
+      pressure.trim();
+      JsonDocument doc1;
+      //doc1["latitude"] = latitude;
+      //doc1["longitude"] = longitude; 
+      serializeJson(doc1,buf);
+    }
+    
+    
 
     if (!hasError)
     {
-      String topic = "Loragw/" + user;
-      if (mqttClient.publish( topic.c_str() , message.c_str() , true))
+      
+      if (mqttClient.publish( topic.c_str() , buf , true))
       {
         Serial.println("Published MQTT message to topic ("+topic+") : " + message);
       }
@@ -86,7 +114,9 @@ void connectMQTT()
   Serial.println("Connecting to MQTT Server ... ");
   mqttClient.setKeepAlive(5);
   mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
-  if (!mqttClient.connect(MQTT_CLIENTID.c_str(), MQTT_USER, MQTT_PASSWORD))
+  String client_id = "esp32-client-";
+  client_id += String(WiFi.macAddress());
+  if (!mqttClient.connect(client_id.c_str(), MQTT_USER, MQTT_PASSWORD))
   {
     Serial.print("Connection failed ! state = ");
     Serial.println(mqttClient.state());
@@ -94,7 +124,7 @@ void connectMQTT()
   else
   {
     Serial.print("Connected to MQTT Server with ClientID : ");
-    Serial.println(MQTT_CLIENTID);
+    Serial.println(client_id);
   }
 }
 
