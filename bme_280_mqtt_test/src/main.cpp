@@ -26,7 +26,7 @@ WiFiClient espClient;
 #define SS 18
 #define RST 23
 #define DI0 26
-#define BAND 8635E5
+#define BAND 8654E5
 
 boolean hasLora = false;
 unsigned long beforeLora;
@@ -95,9 +95,9 @@ void standardFunction()
     hasLora = true;
   }
 
-  LoRa.setSignalBandwidth(125E3);
+  LoRa.setSignalBandwidth(250E3);
   LoRa.setSpreadingFactor(8);
-  LoRa.setCodingRate4(6);
+  LoRa.setCodingRate4(5);
   LoRa.setPreambleLength(8);
   LoRa.enableCrc();
   LoRa.setTxPower(14);

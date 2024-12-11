@@ -130,7 +130,7 @@ void serializeValues(char * buf)
 
   if (windSpeed >= 0) // check if value exists
   {
-    doc["windspeed(Km/h) "] = windSpeed;
+    doc["windspeed(Km/h)"] = windSpeed;
   }
   if(windConnected)
   {
