@@ -1,6 +1,5 @@
 #include "sensor.h"
 
-
 #include <Adafruit_BME280.h>
 #include <Wire.h>
 #include <ArduinoJson.h>
@@ -13,14 +12,15 @@ float pressure;
 float windSpeed;
 String windDirection;
 bool windConnected;
+float battery;
 
 Adafruit_BME280 bme;
 
 float readWindSpeed()
 {
-  pinMode(WINDSPEED_SENSOR_PIN,INPUT);
+  pinMode(WINDSPEED_SENSOR_PIN, INPUT);
   int sensorVal = analogRead(WINDSPEED_SENSOR_PIN);
-  
+
   float voltage = sensorVal * (3.3 / 4095.0); // waarde op schaal zetten
 
   float currentmA = (voltage / WINDSPEED_SENSOR_RESISTOR) * 1000; // stroom in mA
@@ -33,7 +33,7 @@ float readWindSpeed()
   {
     windSpeed = (currentmA - 3) * (108 / 16); // sensor kan tot 30m/s = 108 km/h
     if (windSpeed < 0)
-      windSpeed=0;
+      windSpeed = 0;
     return windSpeed;
   }
 }
@@ -44,12 +44,12 @@ bool determineWindDirection()
   float currentmA, voltage;
   String result;
   float sensorVal = analogRead(WINDDIRECTION_SENSOR_PIN);
-  voltage = sensorVal/ 4095.0 * 3.3;
-  currentmA = (voltage/ WINDDIRECTION_SENSOR_RESISTOR) * 1000;
+  voltage = sensorVal / 4095.0 * 3.3;
+  currentmA = (voltage / WINDDIRECTION_SENSOR_RESISTOR) * 1000;
 
   if (currentmA == 0.0)
   {
-    //result = "Windrichting is offline"; kan nog eens dienen voor recupel
+    // result = "Windrichting is offline"; kan nog eens dienen voor recupel
     return 0;
   }
 
@@ -85,7 +85,7 @@ bool determineWindDirection()
 
   else if (currentmA >= 13.4 && currentmA < 15.4)
   {
-    result ="West (W)";
+    result = "West (W)";
   }
 
   else if (currentmA >= 15.4 && currentmA < 17.7)
@@ -93,14 +93,13 @@ bool determineWindDirection()
     result = "Noord-West (NW)";
   }
 
-  else{
+  else
+  {
     result = "Er is iets mis";
-   
   }
   windDirection = result;
-  
+
   return 1;
-  
 }
 void readValues()
 {
@@ -115,12 +114,17 @@ void readValues()
   windConnected = determineWindDirection();
 }
 
-void serializeValues(char * buf)
+void serializeValues(char *buf)
 {
+  battery = 69.69;
   JsonDocument doc;
-  doc["t"]="m";
-  doc["topic"]=measureTopic;
-
+  doc["t"] = "m";
+  doc["topic"] = measureTopic;
+  temperature = int(round(temperature * 100.00)) / 100.00; // round everything to 2 numbers
+  humidity = int(round(humidity * 100.00)) / 100.00;
+  pressure = int(round(pressure * 100.00)) / 100.00;
+  windSpeed = int(round(windSpeed * 100.00)) / 100.00;
+  battery = int(round(battery * 100.00)) / 100.00;
   if (bme.checkConnection(0x76))
   {
     doc["temperature(C)"] = temperature;
@@ -132,13 +136,11 @@ void serializeValues(char * buf)
   {
     doc["windspeed(Km/h)"] = windSpeed;
   }
-  if(windConnected)
+  if (windConnected)
   {
-    doc["winddirection()"]= windDirection;
-    
+    doc["winddirection()"] = windDirection;
   }
-  doc["battery(%)"] = (69.69);
-  
-  serializeJson(doc, buf,1000);
-  
+  doc["battery(%)"] = battery;
+
+  serializeJson(doc, buf, 1000);
 }

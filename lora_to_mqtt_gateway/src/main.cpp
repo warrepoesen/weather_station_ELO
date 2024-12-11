@@ -59,7 +59,7 @@ void onLoraReceive(int packetSize)
       Serial.println("Invalid data format : user value is missing");
     }
 
-    if (t == "i") //if info topic
+    if (t == "i") // if info topic
     {
       String userName = doc["name"];
       String userPassword = doc["password"];
@@ -70,7 +70,7 @@ void onLoraReceive(int packetSize)
       doc1["password"] = userPassword;
       serializeJson(doc1, buf);
     }
-    if (t == "g") //if gps topic
+    if (t == "g") // if gps topic
     {
       double latitude = doc["latitude"];
       double longitude = doc["longitude"];
@@ -79,7 +79,7 @@ void onLoraReceive(int packetSize)
       doc1["longitude"] = longitude;
       serializeJson(doc1, buf);
     }
-    if (t == "m") //if measure topic
+    if (t == "m") // if measure topic
     {
 
       float temperature = doc["temperature(C)"];
@@ -87,6 +87,7 @@ void onLoraReceive(int packetSize)
       float pressure = doc["pressure(HPa)"];
       float windspeed = doc["windspeed(Km/h)"];
       String windDirection = doc["winddirection()"];
+      double battery = doc["battery(%)"];
       windDirection.trim();
 
       JsonDocument doc1;
@@ -100,10 +101,17 @@ void onLoraReceive(int packetSize)
       {
         doc1["windspeed(Km/h)"] = windspeed;
       }
-      if (windDirection)
+      if (windDirection != "null")
       {
         doc1["winddirection()"] = windDirection;
       }
+      temperature = int(round(temperature * 100.00)) / 100.00; // round everything to 2 numbers
+      humidity = int(round(humidity * 100.00)) / 100.00;
+      pressure = int(round(pressure * 100.00)) / 100.00;
+      windspeed = int(round(windspeed * 100.00)) / 100.00;
+      battery = int(round(battery * 100.00)) / 100.00;
+
+      doc1["battery(%)"] = battery;
       serializeJson(doc1, buf);
     }
 
@@ -112,11 +120,11 @@ void onLoraReceive(int packetSize)
 
       if (mqttClient.publish(topic.c_str(), buf, true))
       {
-        Serial.println("Published MQTT message to topic (" + topic + ") : " + message);
+        Serial.println("Published MQTT message to topic (" + topic + ") : " + buf);
       }
       else
       {
-        Serial.println("Failed to send MQTT message to topic (" + topic + ") : " + message);
+        Serial.println("Failed to send MQTT message to topic (" + topic + ") : " + buf);
       }
     }
   }
