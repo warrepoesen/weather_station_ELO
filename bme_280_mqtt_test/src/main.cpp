@@ -33,7 +33,7 @@ unsigned long beforeLora;
 unsigned long afterLora;
 
 // gps
-bool gps_on = false;
+bool gps_on = true;
 
 void sendLoraMessage(String message)
 {
@@ -112,7 +112,7 @@ void standardFunction()
     sendLoraMessage(buf0);
   }
 
-  if (bootCount == 2 && gps_on)
+  if (bootCount == 1 && gps_on)
   {
     readGPS();
     delay(500);
@@ -120,6 +120,13 @@ void standardFunction()
     serializeGPS(buf1);
     sendLoraMessage(buf1);
   }
+  if (bootCount <= 10 && gps_on)
+  {
+    char buf2[1000];
+    serializeGPS(buf2);
+    sendLoraMessage(buf2);
+  }
+  
 
   bme.begin(0x76);
 
@@ -127,9 +134,9 @@ void standardFunction()
   readValues();
   if (bme.checkConnection(0x76) or (windSpeed >= 0) or windConnected) // check if any sensor is connected
   {
-    char buf2[1000];
-    serializeValues(buf2);
-    sendLoraMessage(buf2);
+    char buf3[1000];
+    serializeValues(buf3);
+    sendLoraMessage(buf3);
   }
 
   // mosfet uitzetten
