@@ -7,7 +7,7 @@
 RTC_DATA_ATTR int bootCount = 0;
 
 
-void print_wakeup_reason()
+esp_sleep_wakeup_cause_t print_wakeup_reason()
 {
   esp_sleep_wakeup_cause_t wakeup_reason;
 
@@ -34,4 +34,5 @@ void print_wakeup_reason()
     Serial.printf("Wakeup was not caused by deep sleep: %d\n", wakeup_reason);
     break;
   }
+  return wakeup_reason;
 }

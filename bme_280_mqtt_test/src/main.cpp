@@ -10,8 +10,8 @@
 #include "AP.h"
 
 //// WiFi
- #define SSID "ProjectNetwork" // Enter your WiFi name
- #define PASSWORD "eloict1234" // Enter WiFi password
+#define SSID "ProjectNetwork" // Enter your WiFi name
+#define PASSWORD "eloict1234" // Enter WiFi password
 WiFiClient espClient;
 
 //// MQTT Broker
@@ -54,33 +54,7 @@ void standardFunction()
 
   // zet mosfet aan
 
-  // Connecting to a Wi-Fi network
-   WiFi.begin(SSID, PASSWORD);
-  // while (WiFi.status() != WL_CONNECTED)
-  //{
-  //  delay(500);
-  //  Serial.println("Connecting to WiFi..");
-  //}
-  //
-  // client.setServer(MQTT_SERVER, MQTT_PORT);
-  //
-  // while (!client.connected())
-  //{
-  //  String client_id = "esp32-client-";
-  //  client_id += String(WiFi.macAddress());
-  //  Serial.printf("The client %s connects to the public MQTT broker\n", client_id.c_str());
-  //  if (client.connect(client_id.c_str(), MQTT_USER, MQTT_PASSWORD))
-  //  {
-  //    Serial.println("Public EMQX MQTT broker connected");
-  //  }
-  //  else
-  //  {
-  //    Serial.print("failed with state ");
-  //    Serial.print(client.state());
-  //    delay(2000);
-  //  }
-  //}
-  
+  WiFi.begin(SSID, PASSWORD); // is required to read mac addres
   readMacAddress();
 
   LoRa.setPins(SS, RST, DI0);
@@ -126,9 +100,9 @@ void standardFunction()
     serializeGPS(buf2);
     sendLoraMessage(buf2);
   }
-  
 
   bme.begin(0x76);
+  alpha_setupSPI();
 
   Serial.println("-- Default Test --");
   readValues();
@@ -146,10 +120,32 @@ void setup()
 {
 
   Serial.begin(115200);
+  pinMode(REED_PIN, INPUT_PULLUP);
+  esp_sleep_enable_ext0_wakeup((gpio_num_t)REED_PIN, 0);
 
-  ++bootCount;
+  esp_sleep_wakeup_cause_t wakeupReason = print_wakeup_reason();
+
+  if (wakeupReason == ESP_SLEEP_WAKEUP_EXT0)
+  {
+    tipCount++;
+    Serial.printf("Wakker geworden door reedcontact! Aantal tips: %d\n", tipCount);
+  }
+  else if (wakeupReason == ESP_SLEEP_WAKEUP_TIMER)
+  {
+    ++bootCount;
+    totalRainfall = tipCount * WATERPERTIP;
+    //Serial.println("--- Regenmeter ---");
+    //Serial.printf("Aantal tips: %d\n", tipCount);
+    //Serial.printf("Totaal gevallen regen: %.2f mm\n", totalRainfall);
+    tipCount = 0;
+  }
+  else
+  {
+    Serial.println("Eerste opstart of onbekende wake-up reden.");
+  }
+  
   Serial.println("Boot number: " + String(bootCount));
-  print_wakeup_reason();
+  
 
   if (!ap_setup) // if setup = true dont do this
   {

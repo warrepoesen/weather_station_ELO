@@ -87,8 +87,20 @@ void onLoraReceive(int packetSize)
       float pressure = doc["pressure(HPa)"];
       float windspeed = doc["windspeed(Km/h)"];
       String windDirection = doc["winddirection()"];
+      float PM1 = doc["PM1(µg/m³)"];
+      float PM2_5 = doc["PM2.5(µg/m³)"];
+      float PM10 = doc["PM10(µg/m³)"];
       double battery = doc["battery(%)"];
       windDirection.trim();
+
+      temperature = int(round(temperature * 100.00)) / 100.00; // round everything to 2 numbers
+      humidity = int(round(humidity * 100.00)) / 100.00;
+      pressure = int(round(pressure * 100.00)) / 100.00;
+      PM1 = int(round(PM1 * 100.00)) / 100.00;
+      PM2_5 = int(round(PM2_5 * 100.00)) / 100.00;
+      PM10 = int(round(PM10 * 100.00)) / 100.00;
+      windspeed = int(round(windspeed * 100.00)) / 100.00;
+      battery = int(round(battery * 100.00)) / 100.00;
 
       JsonDocument doc1;
       if (temperature)
@@ -96,6 +108,12 @@ void onLoraReceive(int packetSize)
         doc1["temperature(C)"] = temperature;
         doc1["humidity(%)"] = humidity;
         doc1["pressure(HPa)"] = pressure;
+      }
+      if (PM1)
+      {
+        doc1["PM1(µg/m³)"] = PM1;
+        doc1["PM2.5(µg/m³)"] = PM2_5;
+        doc1["PM10(µg/m³)"] = PM10;
       }
       if (windspeed)
       {
@@ -105,11 +123,6 @@ void onLoraReceive(int packetSize)
       {
         doc1["winddirection()"] = windDirection;
       }
-      temperature = int(round(temperature * 100.00)) / 100.00; // round everything to 2 numbers
-      humidity = int(round(humidity * 100.00)) / 100.00;
-      pressure = int(round(pressure * 100.00)) / 100.00;
-      windspeed = int(round(windspeed * 100.00)) / 100.00;
-      battery = int(round(battery * 100.00)) / 100.00;
 
       doc1["battery(%)"] = battery;
       serializeJson(doc1, buf);

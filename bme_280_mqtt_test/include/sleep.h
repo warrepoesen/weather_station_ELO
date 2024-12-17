@@ -5,4 +5,4 @@
 //sleep
 extern RTC_DATA_ATTR int bootCount;
 
-void print_wakeup_reason();
+esp_sleep_wakeup_cause_t print_wakeup_reason();
