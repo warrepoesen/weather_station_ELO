@@ -7,12 +7,12 @@
 #define WINDDIRECTION_SENSOR_PIN 39
 #define WINDDIRECTION_SENSOR_RESISTOR 121
 #define WATERPERTIP  0.165
-#define REED_PIN 14 //reed contact pin
+#define REED_PIN 35 //reed contact pin
 
-#define PIN_CS 21  // Chip Select (GPIO 21 gekozen uit de bovenste rijen)
-#define PIN_MISO 34 // Master In Slave Out
-#define PIN_MOSI 23 // Master Out Slave In
-#define PIN_SCK 22  // Serial Clock
+#define PIN_CS 14  // Chip Select (GPIO 21 gekozen uit de bovenste rijen)
+#define PIN_MISO 12 // Master In Slave Out
+#define PIN_MOSI 13 // Master Out Slave In
+#define PIN_SCK 15  // Serial Clock
 #define SPI_FREQ 1000000  
 
 

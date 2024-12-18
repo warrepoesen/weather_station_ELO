@@ -33,7 +33,7 @@ unsigned long beforeLora;
 unsigned long afterLora;
 
 // gps
-bool gps_on = true;
+bool gps_on = false;
 
 void sendLoraMessage(String message)
 {

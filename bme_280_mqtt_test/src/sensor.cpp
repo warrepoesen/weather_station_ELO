@@ -239,8 +239,11 @@ void readValues()
     humidity = bme.readHumidity();
     pressure = bme.readPressure() / 100.0F;
   }
+  Serial.println(alpha_on());
   if (alpha_on()) // enables the sensor en retuns true if succes otherwise false
   {
+    Serial.println(alpha_on());
+    delay(10000);
     readPmData(); // reads data and puts it in the global variables
   }
 
@@ -278,7 +281,8 @@ void serializeValues(char *buf)
   {
     doc["winddirection()"] = windDirection;
   }
-  if (alpha_on)
+  
+  if (alpha_on())
   {
     doc["PM1(µg/m³)"] = PM1;
     doc["PM2.5(µg/m³)"] = PM2_5;
