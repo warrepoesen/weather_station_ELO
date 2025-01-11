@@ -86,7 +86,7 @@ void standardFunction()
     sendLoraMessage(buf0);
   }
 
-  if (bootCount == 1 && gps_on)
+  if (bootCount == 5 && gps_on)
   {
     readGPS();
     delay(500);
@@ -169,8 +169,8 @@ void loop()
   AP_loop();
   if (!ap_setup) // if setup = true dont do this
   {
-    esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
-    Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) + " Seconds");
+    esp_sleep_enable_timer_wakeup(1 * uS_TO_S_FACTOR);
+    Serial.println("Setup ESP32 to sleep for every " + String(1) + " Seconds");
 
     Serial.println("Going to sleep now");
     delay(500);
